@@ -13,7 +13,7 @@
 
 - First clone the project (repo)
 ```sh
-git clone repo link
+git clone https://github.com/shoaibbadshahsl/teamtaskboard
 ```
 
 - change the directory 
