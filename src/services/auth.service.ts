@@ -59,3 +59,50 @@ export const login = async (data: LoginData) => {
 
   return { token };
 };
+
+interface UpdateUserData {
+  name?: string;
+  email?: string;
+}
+
+export const updateUser = async (id: string, data: UpdateUserData) => {
+  // Check if email is being updated and is already taken
+  if (data.email) {
+    const existingUser = await User.findOne({ email: data.email });
+    if (existingUser && existingUser._id.toString() !== id) {
+      throw createBadRequestError('Email is already in use');
+    }
+  }
+
+  const user = await User.findByIdAndUpdate(
+    id,
+    data,
+    { new: true, runValidators: true }
+  ).select('-password');
+
+  if (!user) {
+    throw createNotFoundError('User not found');
+  }
+
+  return user;
+};
+
+export const deleteUser = async (id: string) => {
+  const user = await User.findByIdAndDelete(id);
+  
+  if (!user) {
+    throw createNotFoundError('User not found');
+  }
+
+  return { message: 'User deleted successfully' };
+};
+
+export const getUserById = async (id: string) => {
+  const user = await User.findById(id).select('-password');
+  
+  if (!user) {
+    throw createNotFoundError('User not found');
+  }
+
+  return user;
+};
