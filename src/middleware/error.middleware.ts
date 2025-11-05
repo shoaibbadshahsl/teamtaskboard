@@ -1,23 +1,42 @@
 import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../utils/errors';
+import { AppError, isAppError, createValidationError } from '../utils/errors';
 import { ZodError } from 'zod';
+import { logger } from '../utils/logger';
 
-export const errorMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err); // Log the full error for debugging
+export const errorMiddleware = (
+  err: Error | AppError | unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // Log error with context
+  logger.error('Error occurred', {
+    error: err instanceof Error ? err.message : 'Unknown error',
+    path: req.path,
+    method: req.method,
+    body: req.body,
+    stack: err instanceof Error ? err.stack : undefined
+  });
 
-  if (err instanceof AppError) {
-    return res.status(err.httpStatus).json({ message: err.message });
+  if (isAppError(err)) {
+    const response = err.details 
+      ? { message: err.message, details: err.details }
+      : { message: err.message };
+    return res.status(err.httpStatus).json(response);
   }
 
   if (err instanceof ZodError) {
-    return res.status(400).json({
-      message: 'Validation failed',
-      errors: err.issues.map(e => ({ path: e.path, message: e.message })), // Corrected from err.errors to err.issues
+    const validationError = createValidationError('Validation failed', 
+      err.issues.map(e => ({ field: e.path.join('.'), message: e.message }))
+    );
+    return res.status(validationError.httpStatus).json({
+      message: validationError.message,
+      details: validationError.details
     });
   }
 
   // Handle mongoose CastError (e.g., invalid ObjectId)
-  if (err.name === 'CastError') {
+  if (err instanceof Error && err.name === 'CastError') {
     return res.status(400).json({ message: 'Invalid ID format' });
   }
 

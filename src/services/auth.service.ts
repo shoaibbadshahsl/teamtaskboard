@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/user.model';
-import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
+import { createBadRequestError, createNotFoundError, createUnauthorizedError } from '../utils/errors';
 
 interface RegisterData {
   email: string;
@@ -14,7 +14,7 @@ export const register = async (data: RegisterData) => {
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new BadRequestError('User with this email already exists');
+    throw createBadRequestError('User with this email already exists');
   }
 
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -40,12 +40,12 @@ export const login = async (data: LoginData) => {
 
   const user = await User.findOne({ email });
   if (!user) {
-    throw new UnauthorizedError('Invalid credentials');
+    throw createUnauthorizedError('Invalid credentials');
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new UnauthorizedError('Invalid credentials');
+    throw createUnauthorizedError('Invalid credentials');
   }
 
   // Ensure JWT_SECRET is set

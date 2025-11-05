@@ -1,6 +1,6 @@
 import { Task } from '../models/task.model';
 import { User } from '../models/user.model';
-import { NotFoundError, BadRequestError } from '../utils/errors';
+import { createNotFoundError, createBadRequestError } from '../utils/errors';
 
 export const getAllTasks = async () => {
   return Task.find().populate('assignedTo', 'name email');
@@ -9,7 +9,7 @@ export const getAllTasks = async () => {
 export const getTaskById = async (id: string) => {
   const task = await Task.findById(id).populate('assignedTo', 'name email');
   if (!task) {
-    throw new NotFoundError('Task not found');
+    throw createNotFoundError('Task not found');
   }
   return task;
 };
@@ -21,18 +21,18 @@ export const createTask = async (data: {
   assignedTo?: string;
 }) => {
   if (!data.title) {
-    throw new BadRequestError('Title is required');
+    throw createBadRequestError('Title is required');
   }
 
   const allowedStatuses = new Set(['Pending', 'In Progress', 'Done']);
   if (data.status && !allowedStatuses.has(data.status)) {
-    throw new BadRequestError('Invalid status value');
+    throw createBadRequestError('Invalid status value');
   }
 
   if (data.assignedTo) {
     const user = await User.findById(data.assignedTo);
     if (!user) {
-      throw new NotFoundError('Assigned user not found');
+      throw createNotFoundError('Assigned user not found');
     }
   }
 
@@ -41,7 +41,7 @@ export const createTask = async (data: {
   // Re-query to ensure assignedTo is populated and the response shape matches expected output
   const task = await Task.findById(created._id).populate('assignedTo', 'name email');
   if (!task) {
-    throw new NotFoundError('Task not found after creation');
+    throw createNotFoundError('Task not found after creation');
   }
   return task;
 };
@@ -57,13 +57,13 @@ export const updateTask = async (
 ) => {
   const allowedStatuses = new Set(['Pending', 'In Progress', 'Done']);
   if (data.status && !allowedStatuses.has(data.status)) {
-    throw new BadRequestError('Invalid status value');
+    throw createBadRequestError('Invalid status value');
   }
 
   if (data.assignedTo) {
     const user = await User.findById(data.assignedTo);
     if (!user) {
-      throw new NotFoundError('Assigned user not found');
+      throw createNotFoundError('Assigned user not found');
     }
   }
 
@@ -72,7 +72,7 @@ export const updateTask = async (
     'name email'
   );
   if (!task) {
-    throw new NotFoundError('Task not found');
+    throw createNotFoundError('Task not found');
   }
   return task;
 };
@@ -80,7 +80,7 @@ export const updateTask = async (
 export const deleteTask = async (id: string) => {
   const task = await Task.findByIdAndDelete(id);
   if (!task) {
-    throw new NotFoundError('Task not found');
+    throw createNotFoundError('Task not found');
   }
   return { message: 'Task deleted successfully' };
 };
@@ -118,7 +118,7 @@ export const assignTask = async (taskId: string, userId: string) => {
     // Check if the user exists
     const user = await User.findById(userId);
     if (!user) {
-        throw new NotFoundError('User to be assigned not found');
+        throw createNotFoundError('User to be assigned not found');
     }
 
     const task = await Task.findByIdAndUpdate(
@@ -128,7 +128,7 @@ export const assignTask = async (taskId: string, userId: string) => {
     ).populate('assignedTo', 'name email');
 
     if (!task) {
-        throw new NotFoundError('Task not found');
+        throw createNotFoundError('Task not found');
     }
 
     return task;

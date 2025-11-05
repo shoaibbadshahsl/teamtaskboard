@@ -1,27 +1,45 @@
-export class AppError extends Error {
-  public readonly httpStatus: number;
-
-  constructor(message: string, httpStatus: number) {
-    super(message);
-    this.httpStatus = httpStatus;
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
+export interface AppError {
+  message: string;
+  httpStatus: number;
+  name: string;
+  details?: ValidationErrorDetail[];
 }
 
-export class NotFoundError extends AppError {
-  constructor(message: string = 'Resource not found') {
-    super(message, 404);
-  }
+export interface ValidationErrorDetail {
+  field: string;
+  message: string;
 }
 
-export class BadRequestError extends AppError {
-  constructor(message: string = 'Bad Request') {
-    super(message, 400);
-  }
-}
+export const createError = (
+  message: string,
+  httpStatus: number,
+  name: string,
+  details?: ValidationErrorDetail[]
+): AppError => ({
+  message,
+  httpStatus,
+  name,
+  details
+});
 
-export class UnauthorizedError extends AppError {
-  constructor(message: string = 'Unauthorized') {
-    super(message, 401);
-  }
-}
+export const createNotFoundError = (
+  message: string = 'Resource not found'
+): AppError => createError(message, 404, 'NotFoundError');
+
+export const createBadRequestError = (
+  message: string = 'Bad Request'
+): AppError => createError(message, 400, 'BadRequestError');
+
+export const createUnauthorizedError = (
+  message: string = 'Unauthorized'
+): AppError => createError(message, 401, 'UnauthorizedError');
+
+export const createValidationError = (
+  message: string = 'Validation failed',
+  details: ValidationErrorDetail[] = []
+): AppError => createError(message, 400, 'ValidationError', details);
+
+export const isAppError = (error: unknown): error is AppError => {
+  if (!error || typeof error !== 'object') return false;
+  return 'httpStatus' in error && 'message' in error && 'name' in error;
+};

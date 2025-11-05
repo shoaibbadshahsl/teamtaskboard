@@ -1,13 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import * as authService from '../services/auth.service';
-import { z } from 'zod';
-import { User } from '../models/user.model'; // Corrected import
-
-const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().min(3),
-});
+import * as authService from '../../services/auth.service';
+import { loginSchema, registerSchema } from './schema';
+import { User } from '../../models/user.model';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -18,11 +12,6 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     next(error);
   }
 };
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-});
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -36,7 +25,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const users = await User.find({}, '-password'); // Exclude passwords from the result
+    const users = await User.find({}, '-password');
     res.status(200).json(users);
   } catch (error) {
     next(error);

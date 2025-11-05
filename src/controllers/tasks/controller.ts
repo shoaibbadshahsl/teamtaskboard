@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import * as taskService from '../services/task.service';
-import { createTaskSchema, updateTaskSchema } from '../validators/task.validator';
+import * as taskService from '../../services/task.service';
+import { createTaskSchema, updateTaskSchema } from './schema';
 
 export const getTasks = async (req: Request, res: Response, next: NextFunction) => {
   try {
