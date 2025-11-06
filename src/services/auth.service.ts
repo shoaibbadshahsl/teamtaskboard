@@ -27,7 +27,16 @@ export const register = async (data: RegisterData) => {
 
   await user.save();
 
-  return { message: 'User registered successfully' };
+    // Ensure JWT_SECRET is set
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set.'); // Internal server error
+  }
+
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: '1h',
+  });
+
+  return { token, message: 'User registered successfully' };
 };
 
 interface LoginData {
